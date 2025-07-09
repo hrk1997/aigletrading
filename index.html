@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aigle Trading</title>
+    <!-- Google Fonts - Saira -->
+    <link href="https://fonts.googleapis.com/css2?family=Saira:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for the Saira font and general body styling */
+        body {
+            font-family: 'Saira', sans-serif;
+            background-color: #f8f8f8; /* Light off-white background */
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        /* Hide pages by default, show only the active one */
+        .page-content {
+            display: none;
+        }
+        .page-content.active {
+            display: block;
+        }
+        /* Style for the journal entries */
+        .journal-entry {
+            background-color: #ffffff;
+            border-left: 4px solid #555; /* Darker gray border for accent */
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08); /* Softer shadow */
+        }
+        /* Custom scrollbar for journal entries if many */
+        .journal-container {
+            max-height: 400px; /* Limit height */
+            overflow-y: auto; /* Enable vertical scrolling */
+            padding-right: 10px; /* Space for scrollbar */
+        }
+        .journal-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        .journal-container::-webkit-scrollbar-track {
+            background: #e0e0e0;
+            border-radius: 10px;
+        }
+        .journal-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        .journal-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        /* Styles for horizontal scrolling tools */
+        .tools-scroll-container {
+            display: flex;
+            overflow-x: auto; /* Enable horizontal scrolling */
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+            gap: 1.5rem; /* Space between tool cards */
+            padding-bottom: 1rem; /* Space for scrollbar */
+        }
+        .tools-scroll-container > div {
+            flex: 0 0 auto; /* Do not grow, do not shrink, base on content */
+            width: 90%; /* Adjust width for mobile */
+            max-width: 400px; /* Max width for larger screens */
+        }
+        @media (min-width: 768px) {
+            .tools-scroll-container > div {
+                width: calc(50% - 0.75rem); /* Two columns on medium screens */
+            }
+        }
+        @media (min-width: 1024px) {
+            .tools-scroll-container > div {
+                width: calc(33.33% - 1rem); /* Three columns on large screens */
+            }
+        }
+        /* Time zone session styling */
+        .session-card {
+            background-color: #ffffff;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+        .volume-bar {
+            height: 10px;
+            border-radius: 5px;
+            background-color: #e0e0e0;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+        .volume-fill {
+            height: 100%;
+            background-color: #555; /* Dark gray for volume */
+        }
+        /* Specific styles for profit/loss display in journal */
+        .profit-display {
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+        }
+        .profit-display.positive {
+            color: #22c55e; /* Tailwind green-500 */
+        }
+        .profit-display.negative {
+            color: #ef4444; /* Tailwind red-500 */
+        }
+        .profit-display svg {
+            margin-right: 0.25rem;
+        }
+
+        /* Minimalist Button Styles */
+        .nav-button {
+            background: none;
+            border: none;
+            padding: 0.5rem 1rem; /* Keep some padding for clickability */
+            color: white; /* Default text color */
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease; /* Smooth transition for hover effects */
+            position: relative; /* Needed for pseudo-elements or complex hover effects */
+        }
+
+        /* Gradient hover effect for buttons */
+        .nav-button:hover {
+            background-image: linear-gradient(to right, #10B981, #34D399); /* Green gradient */
+            /-webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 5px rgba(52, 211, 153, 0.5); /* Subtle glow */
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+    <!-- Header/Navigation -->
+    <header class="bg-gray-900 text-white p-4 shadow-md rounded-b-lg">
+        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
+            <h1 class="text-3xl font-bold mb-4 md:mb-0">Aigle Trading</h1>
+            <nav class="space-x-4">
+                <button class="nav-button" data-page="home">Home</button>
+                <button class="nav-button" data-page="about">About</button>
+                <button class="nav-button" data-page="tools">Tools</button>
+                <button class="nav-button" data-page="membership">Membership</button>
+                <button class="nav-button" data-page="contact">Contact</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow container mx-auto p-6 flex items-center justify-center">
+
+        <!-- Home Page -->
+        <section id="home-page" class="page-content active bg-white p-8 rounded-lg shadow-lg max-w-4xl text-center">
+            <h2 class="text-4xl font-extrabold text-gray-900 mb-6">Welcome to Aigle Trading</h2>
+            <p class="text-lg text-gray-700 leading-relaxed mb-8">
+                At Aigle Trading, founded in 2020 by Hrithik Krishna, we are a fully equipped trading broker and financial consulting firm, dedicated to empowering traders with the knowledge, tools, and insights needed to navigate the global financial markets with confidence. Our commitment is to provide a transparent, efficient, and user-friendly platform for all your trading needs.
+            </p>
+            <img src="https://placehold.co/700x350/cccccc/333333?text=Aigle+Trading+Overview" alt="Aigle Trading Overview" class="mt-8 rounded-lg shadow-md mx-auto mb-12">
+
+            <h3 class="text-3xl font-bold text-gray-900 mb-6">Forex Market Hours</h3>
+            <p class="text-lg text-gray-700 leading-relaxed mb-8">
+                Stay informed about the major Forex trading sessions around the globe.
+            </p>
+            <div id="forexMarketHours" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Forex market hours will be dynamically inserted here -->
+            </div>
+        </section>
+
+        <!-- About Page -->
+        <section id="about-page" class="page-content bg-white p-8 rounded-lg shadow-lg max-w-3xl">
+            <h2 class="text-4xl font-extrabold text-gray-900 mb-6 text-center">About Aigle Trading</h2>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-3">Our Mission</h3>
+                    <p class="text-gray-700 leading-relaxed">
+                        To democratize access to financial markets by providing cutting-edge technology, comprehensive educational resources, and unparalleled support, enabling every trader to achieve their financial goals.
+                    </p>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-3">Our Vision</h3>
+                    <p class="text-gray-700 leading-relaxed">
+                        To be the most trusted and innovative trading platform globally, recognized for our integrity, technological excellence, and commitment to client success.
+                    </p>
+                </div>
+            </div>
+            <div class="mt-8">
+                <h3 class="text-2xl font-bold text-gray-800 mb-3">Who We Are</h3>
+                <p class="text-gray-700 leading-relaxed mb-4">
+                    Aigle Trading, established in 2020, is a comprehensive financial services provider. We operate as a fully equipped trading broker, offering robust platforms and competitive conditions for various financial instruments. Beyond brokerage, we specialize in insightful financial consulting, guiding clients through complex market landscapes.
+                </p>
+                <p class="text-gray-700 leading-relaxed mb-4">
+                    Our core strength lies in our dedicated mentorship programs, designed to cultivate skilled and confident traders. We believe in empowering individuals with practical knowledge and strategic thinking to navigate the markets effectively.
+                </p>
+                <h3 class="text-2xl font-bold text-gray-800 mb-3 mt-6">Meet the Founder & CEO</h3>
+                <div class="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6">
+                    <img src="https://placehold.co/150x150/cccccc/333333?text=Hrithik+Krishna" alt="Hrithik Krishna" class="rounded-full shadow-md w-32 h-32 object-cover">
+                    <div>
+                        <p class="text-xl font-semibold text-gray-900">Hrithik Krishna</p>
+                        <p class="text-gray-600">Founder & CEO, Aigle Trading</p>
+                        <p class="text-gray-700 leading-relaxed mt-2">
+                            Hrithik Krishna founded Aigle Trading in 2020 with a vision to revolutionize how individuals approach financial markets. With extensive experience in trading and financial strategy, Hrithik leads the company's mission to provide accessible and effective trading solutions and unparalleled mentorship. His commitment to client success and transparent practices forms the bedrock of Aigle Trading's philosophy.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Membership Page -->
+        <section id="membership-page" class="page-content bg-white p-8 rounded-lg shadow-lg max-w-3xl text-center">
+            <h2 class="text-4xl font-extrabold text-gray-900 mb-6">Aigle Trading Mentorship</h2>
+            <p class="text-lg text-gray-700 leading-relaxed mb-8">
+                Unlock your full trading potential with Aigle Trading's exclusive mentorship program. Designed for aspiring and experienced traders alike, our program offers personalized guidance, practical strategies, and a deep dive into market dynamics.
+            </p>
+            <div class="bg-gray-100 p-6 rounded-lg shadow-md mb-8">
+                <h3 class="text-3xl font-bold text-gray-800 mb-4">Invest in Your Trading Future</h3>
+                <p class="text-xl font-semibold text-gray-900 mb-4">Mentorship Program Fee: <span class="text-green-600">₹555</span></p>
+                <p class="text-gray-700 leading-relaxed">
+                    For a nominal fee of just ₹555, gain access to foundational mentorship that covers essential trading principles, risk management, and strategic planning. This introductory program is your gateway to understanding the market with confidence.
+                </p>
+                <ul class="list-disc list-inside text-left text-gray-700 mt-4 mx-auto max-w-md">
+                    <li>Personalized guidance from experienced mentors.</li>
+                    <li>In-depth understanding of market analysis.</li>
+                    <li>Practical strategies for various trading styles.</li>
+                    <li>Risk management techniques to protect your capital.</li>
+                    <li>Access to a supportive trading community.</li>
+                </ul>
+                <p class="text-gray-700 leading-relaxed mt-6">
+                    Elevate your trading journey. Our mentorship is not just about theory; it's about practical application and building a resilient trading mindset. Join us and transform your approach to the markets.
+                </p>
+            </div>
+            <img src="https://placehold.co/600x300/cccccc/333333?text=Mentorship+Program" alt="Mentorship Program" class="mt-8 rounded-lg shadow-md mx-auto">
+        </section>
+
+        <!-- Tools Page -->
+        <section id="tools-page" class="page-content bg-white p-8 rounded-lg shadow-lg max-w-full overflow-hidden">
+            <h2 class="text-4xl font-extrabold text-gray-900 mb-6 text-center">Trading Tools</h2>
+            <p class="text-lg text-gray-700 leading-relaxed mb-8 text-center">
+                Enhance your trading strategy with our comprehensive suite of tools. Scroll horizontally to view all tools.
+            </p>
+
+            <!-- Time Zone Display -->
+            <div class="bg-gray-100 p-6 rounded-lg shadow-md mb-8">
+                <h3 class="text-2xl font-bold text-gray-800 mb-4 text-center">Current Time in Different Zones</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="timezoneSelect1" class="block text-gray-700 text-sm font-bold mb-2">Select Time Zone 1:</label>
+                        <select id="timezoneSelect1" class="shadow appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-1 focus:ring-gray-500">
+                            <!-- Options will be populated by JS -->
+                        </select>
+                        <p id="currentTime1" class="text-2xl font-bold text-gray-800 mt-2 text-center"></p>
+                    </div>
+                    <div>
+                        <label for="timezoneSelect2" class="block text-gray-700 text-sm font-bold mb-2">Select Time Zone 2:</label>
+                        <select id="timezoneSelect2" class="shadow appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-1 focus:ring-gray-500">
+                            <!-- Options will be populated by JS -->
+                        </select>
+                        <p id="currentTime2" class="text-2xl font-bold text-gray-800 mt-2 text-center"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tools-scroll-container mb-8">
+                <!-- EUR/USD Profit Calculator -->
+                <div class="bg-gray-100 p-6 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">EUR/USD Profit Calculator</h3>
+                    <div class="mb-4">
+                        <label for="eurUsdReason" class="block text-gray-700 text-sm font-bold mb-2">Reason:</label>
+                        <input type="text" id="eurUsdReason" class="shadow appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-1 focus:ring-gray-500" placeholder="e.g., NFP data, Trend continuation">
+                    </div>
+                    <div class="mb-4">
+                        <label for="eurUsdEntryPrice" class="block text-gray-700 text-sm font-bold mb-2">Entry Price:</label>
+                        <input type="number" id="eurUsdEntryPrice" step="0.00001" class="shadow appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-1 focus:ring-gray-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="eurUsdStopLoss" class="block text-gray-700 text-sm font-bold mb-2">Stop Loss:</label>
+                        <input type="number" id="eurUsdStopLoss" step="0.00001" class="shadow appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-1 focus:ring-gray-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="eurUsdTargetPrice" class="block text-gray-700 text-sm font-bold mb-2">Target Price:</label>
+                        <input type="number" id="eurUsdTargetPrice" step="0.00001" class="shadow appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-1 focus:ring-gray-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="eurUsdExitPrice" class="block text-gray-700 text-sm font-bold mb-2">Exit Price:</label>
+                        <input type="number" id="eurUsdExitPrice" step="0.00001" class="shadow appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-1 focus:ring-gray-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="eurUsdLotSize" class="block text-gray-700 text-sm font-bold mb-2">Lot Size (e.g., 0.01, 0.1, 1, 10):</label>
+                        <input type="number" id="eurUsdLotSize" step="0.01" value="0.1" class="shadow appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-1 focus:ring-gray-500">
+                    </div>
+                    <button id="calculateEurUsdProfit" class="bg-gray-800 hover:bg-black text-white font-semibold py-2 px-4 rounded-full shadow-sm transition duration-300 ease-in-out transform hover:scale-105">Calculate & Journal</button>
+                    <div id="eurUsdProfitResult" class="mt-4 text-lg font-semibold text-gray-800"></div>
+                </div>
+
+                <!-- XAU/USD (Gold) Profit Calculator -->
+                <div class="bg-gray-100 p-6 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">XAU/USD Profit Calculator</h3>
+                    <div class="mb-4">
+                        <label for="xauUsdReason" class="block text-gray-700 text-sm font-bold mb-2">Reason:</label>
+                        <input type="text" id="xauUsdReason" class="shadow appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-1 focus:ring-gray-500" placeholder="e.g., Geopolitical event, Technical analysis">
+                    </div>
+                    <div class="mb-4">
+                        <label for="xauUsdEntryPrice" class="block text-gray-700 text-sm font-bold mb-2">Entry Price:</label>
+                        <input type="number" id="xauUsdEntryPrice" step="0.01" class="shadow appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-1 focus:ring-gray-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="xauUsdStopLoss" class="block text-gray-700 text-sm font-bold mb-2">Stop Loss:</label>
+                        <input type="number" id="xauUsdStopLoss" step="0.01" class="shadow appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-1 focus:ring-gray-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="xauUsdTargetPrice" class="block text-gray-700 text-sm font-bold mb-2">Target Price:</label>
+                        <input type="number" id="xauUsdTargetPrice" step="0.01" class="shadow appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-1 focus:ring-gray-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="xauUsdExitPrice" class="block text-gray-700 text-sm font-bold mb-2">Exit Price:</label>
+                        <input type="number" id="xauUsdExitPrice" step="0.01" class="shadow appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-1 focus:ring-gray-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="xauUsdLotSize" class="block text-gray-700 text-sm font-bold mb-2">Lot Size (e.g., 0.01, 0.1, 1, 10):</label>
+                        <input type="number" id="xauUsdLotSize" step="0.01" value="0.1" class="shadow appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-1 focus:ring-gray-500">
+                    </div>
+                    <button id="calculateXauUsdProfit" class="bg-gray-800 hover:bg-black text-white font-semibold py-2 px-4 rounded-full shadow-sm transition duration-300 ease-in-out transform hover:scale-105">Calculate & Journal</button>
+                    <div id="xauUsdProfitResult" class="mt-4 text-lg font-semibold text-gray-800"></div>
+                </div>
+
+                <!-- Trade Planning Journal -->
+                <div class="bg-gray-100 p-6 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Trade Journal</h3>
+                    <p class="text-gray-700 text-sm mb-4">All your calculated trades and manual entries appear here. Designed for easy screenshotting.</p>
+                    <div id="journalEntries" class="mt-6 journal-container">
+                        <!-- Journal entries will be displayed here -->
+                    </div>
+                    <div id="totalProfitLoss" class="mt-4 text-lg font-bold text-gray-900 text-right"></div>
+                </div>
+            </div>
+
+            <h2 class="text-4xl font-extrabold text-gray-900 mt-12 mb-6 text-center">Global Trading Sessions</h2>
+            <p class="text-lg text-gray-700 leading-relaxed mb-8 text-center">
+                Monitor key Forex trading sessions and their typical activity levels.
+            </p>
+            <!-- New Timezone Selector for Trading Sessions -->
+            <div class="bg-gray-100 p-6 rounded-lg shadow-md mb-8">
+                <h3 class="text-2xl font-bold text-gray-800 mb-4 text-center">View Sessions In:</h3>
+                <select id="viewingTimezoneSelect" class="shadow appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-1 focus:ring-gray-500">
+                    <option value="Asia/Dubai">Dubai (UTC+4)</option>
+                    <option value="Asia/Kolkata">India (UTC+5:30)</option>
+                    <option value="local">Your Local Time</option>
+                </select>
+            </div>
+            <div id="tradingSessions" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Session cards will be dynamically inserted here -->
+            </div>
+        </section>
+
+        <!-- Contact Page -->
+        <section id="contact-page" class="page-content bg-white p-8 rounded-lg shadow-lg max-w-3xl">
+            <h2 class="text-4xl font-extrabold text-gray-900 mb-6 text-center">Contact Us</h2>
+            <p class="text-lg text-gray-700 leading-relaxed mb-6 text-center">
+                We'd love to hear from you! Reach out to us through the following channels:
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 justify-items-center">
+                <div class="flex flex-col items-center space-y-2">
+                    <a href="mailto:hrithikkrish555@gmail.com" class="text-gray-700 hover:text-gray-900 transition duration-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                    </a>
+                    <p class="text-gray-800 text-lg">Email</p>
+                </div>
+                <div class="flex flex-col items-center space-y-2">
+                    <a href="https://www.instagram.com/aigletrading/?igsh=MThvanltZ20wMzRoNg%3D%3D&utm_source=qr#" target="_blank" rel="noopener noreferrer" class="text-gray-700 hover:text-gray-900 transition duration-300">
+                        <!-- Simplified Instagram SVG -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 4h10a3 3 0 013 3v10a3 3 0 01-3 3H7a3 3 0 01-3-3V7a3 3 0 013-3z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17.5 6.5h.01" />
+                        </svg>
+                    </a>
+                    <p class="text-gray-800 text-lg">Instagram</p>
+                </div>
+                <div class="flex flex-col items-center space-y-2">
+                    <a href="https://x.com/aigle_trading?s=11&t=_SKuXvDdbAJVJvMQTRh-wg" target="_blank" rel="noopener noreferrer" class="text-gray-700 hover:text-gray-900 transition duration-300">
+                        <!-- X (Twitter) icon - simple SVG -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 7l4.5 4.5M12 12l4.5 4.5M4 16.5l4.5-4.5L12 16.5l4.5-4.5L20 16.5M16.5 7.5L12 12L7.5 7.5" />
+                        </svg>
+                    </a>
+                    <p class="text-gray-800 text-lg">X (Twitter)</p>
+                </div>
+            </div>
+
+            <form class="mt-8 p-6 bg-gray-100 rounded-lg shadow-md">
+                <h3 class="text-2xl font-bold text-gray-800 mb-4">Send us a Message</h3>
+                <div class="mb-4">
+                    <label for="name" class="block text-gray-700 text-sm font-bold mb-2">Your Name:</label>
+                    <input type="text" id="name" class="shadow appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-1 focus:ring-gray-500" placeholder="John Doe">
+                </div>
+                <div class="mb-4">
+                    <label for="email" class="block text-gray-700 text-sm font-bold mb-2">Your Email:</label>
+                    <input type="email" id="email" class="shadow appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-1 focus:ring-gray-500" placeholder="john.doe@example.com">
+                </div>
+                <div class="mb-4">
+                    <label for="message" class="block text-gray-700 text-sm font-bold mb-2">Message:</label>
+                    <textarea id="message" rows="5" class="shadow appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-1 focus:ring-gray-500" placeholder="Your message here..."></textarea>
+                </div>
+                <button type="submit" class="bg-gray-800 hover:bg-black text-white font-semibold py-2 px-6 rounded-full shadow-sm transition duration-300 ease-in-out transform hover:scale-105">Send Message</button>
+            </form>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white p-4 text-center rounded-t-lg shadow-inner mt-auto">
+        <div class="container mx-auto">
+            <p>&copy; 2025 Aigle Trading. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Global array to store journal entries
+        let journalData = [];
+
+        // JavaScript for page navigation
+        document.addEventListener('DOMContentLoaded', () => {
+            const navButtons = document.querySelectorAll('.nav-button');
+            const pages = document.querySelectorAll('.page-content');
+
+            navButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetPageId = button.dataset.page + '-page';
+
+                    pages.forEach(page => {
+                        if (page.id === targetPageId) {
+                            page.classList.add('active');
+                        } else {
+                            page.classList.remove('active');
+                        }
+                    });
+                });
+            });
+
+            // --- Time Zone Display Logic (for Tools Page and Home Page) ---
+            const timezoneSelect1 = document.getElementById('timezoneSelect1');
+            const timezoneSelect2 = document.getElementById('timezoneSelect2');
+            const currentTime1Div = document.getElementById('currentTime1');
+            const currentTime2Div = document.getElementById('currentTime2');
+            const forexMarketHoursDiv = document.getElementById('forexMarketHours'); // For Home page
+
+            // Populate time zone options for the general time zone display
+            const timeZones = Intl.supportedValuesOf('timeZone').sort();
+            if (timezoneSelect1 && timezoneSelect2) {
+                timeZones.forEach(tz => {
+                    const option1 = document.createElement('option');
+                    option1.value = tz;
+                    option1.textContent = tz;
+                    timezoneSelect1.appendChild(option1);
+
+                    const option2 = document.createElement('option');
+                    option2.value = tz;
+                    option2.textContent = tz;
+                    timezoneSelect2.appendChild(option2);
+                });
+
+                // Set default time zones
+                timezoneSelect1.value = Intl.DateTimeFormat().resolvedOptions().timeZone; // User's local timezone
+                timezoneSelect2.value = 'America/New_York'; // New York
+
+                function updateTime(selectElement, displayElement) {
+                    const selectedTimeZone = selectElement.value;
+                    if (selectedTimeZone) {
+                        const now = new Date();
+                        const options = {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
+                            hour12: false, // 24-hour format
+                            timeZone: selectedTimeZone
+                        };
+                        const formatter = new Intl.DateTimeFormat('en-US', options);
+                        displayElement.textContent = formatter.format(now);
+                    }
+                }
+
+                // Initial time display
+                updateTime(timezoneSelect1, currentTime1Div);
+                updateTime(timezoneSelect2, currentTime2Div);
+
+                // Update times every second
+                setInterval(() => updateTime(timezoneSelect1, currentTime1Div), 1000);
+                setInterval(() => updateTime(timezoneSelect2, currentTime2Div), 1000);
+
+                // Event listeners for changing time zones
+                timezoneSelect1.addEventListener('change', () => updateTime(timezoneSelect1, currentTime1Div));
+                timezoneSelect2.addEventListener('change', () => updateTime(timezoneSelect2, currentTime2Div));
+            }
+
+
+            // --- Forex Market Hours (Home Page) ---
+            const forexSessions = [
+                { name: 'Sydney Session', timezone: 'Australia/Sydney', offset: 10, open: 0, close: 9, volume: 'Low' },
+                { name: 'Tokyo Session', timezone: 'Asia/Tokyo', offset: 9, open: 0, close: 9, volume: 'Medium' },
+                { name: 'London Session', timezone: 'Europe/London', offset: 1, open: 8, close: 17, volume: 'High' },
+                { name: 'New York Session', timezone: 'America/New_York', offset: -4, open: 8, close: 17, volume: 'High' }
+            ];
+
+            function updateForexMarketHours() {
+                if (!forexMarketHoursDiv) return; // Exit if element not found (e.g., on other pages)
+
+                forexMarketHoursDiv.innerHTML = ''; // Clear previous entries
+                const now = new Date();
+
+                forexSessions.forEach(session => {
+                    const sessionTimeOptions = {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false,
+                        timeZone: session.timezone
+                    };
+                    const sessionTimeFormatter = new Intl.DateTimeFormat('en-US', sessionTimeOptions);
+                    const currentSessionLocalTimeStr = sessionTimeFormatter.format(now);
+                    const currentSessionLocalHour = parseInt(currentSessionLocalTimeStr.split(':')[0]);
+
+                    let sessionActive = false;
+                    if (session.open < session.close) {
+                        sessionActive = (currentSessionLocalHour >= session.open && currentSessionLocalHour < session.close);
+                    } else { // Handles sessions that cross midnight (e.g., 22:00 - 06:00)
+                        sessionActive = (currentSessionLocalHour >= session.open || currentSessionLocalHour < session.close);
+                    }
+
+                    let volumeLevel = session.volume;
+                    let volumePercentage = 33; // Low
+                    let activityText = 'Normal Activity';
+
+                    const currentUTCHour = now.getUTCHours();
+                    if (currentUTCHour >= 7 && currentUTCHour < 8) { // London-Tokyo overlap
+                        if (session.name === 'London Session' || session.name === 'Tokyo Session') {
+                            volumeLevel = 'Very High';
+                            volumePercentage = 100;
+                            activityText = 'High Overlap Activity';
+                        }
+                    } else if (currentUTCHour >= 12 && currentUTCHour < 16) { // London-New York overlap
+                        if (session.name === 'London Session' || session.name === 'New York Session') {
+                            volumeLevel = 'Very High';
+                            volumePercentage = 100;
+                            activityText = 'High Overlap Activity';
+                        }
+                    } else if (session.volume === 'High') {
+                        volumePercentage = 75;
+                    } else if (session.volume === 'Medium') {
+                        volumePercentage = 50;
+                    }
+
+
+                    const sessionHtml = `
+                        <div class="session-card ${sessionActive ? 'border-2 border-gray-700' : ''}">
+                            <h4 class="text-xl font-semibold text-gray-900">${session.name}</h4>
+                            <p class="text-gray-600 text-sm">${session.timezone} (UTC${session.offset >= 0 ? '+' : ''}${session.offset})</p>
+                            <p class="text-2xl font-bold text-gray-800 my-2">${currentSessionLocalTimeStr}</p>
+                            <p class="text-gray-700 text-sm">Status: <span class="font-semibold ${sessionActive ? 'text-green-600' : 'text-red-600'}">${sessionActive ? 'Open' : 'Closed'}</span></p>
+                            <p class="text-gray-700 text-sm mt-1">Typical Volume: <span class="font-semibold">${volumeLevel}</span></p>
+                            <div class="volume-bar">
+                                <div class="volume-fill" style="width: ${volumePercentage}%;"></div>
+                            </div>
+                            <p class="text-gray-500 text-xs mt-1">${activityText}</p>
+                        </div>
+                    `;
+                    forexMarketHoursDiv.insertAdjacentHTML('beforeend', sessionHtml);
+                });
+            }
+            setInterval(updateForexMarketHours, 1000); // Update every second
+            updateForexMarketHours(); // Initial call
+
+
+            // --- Profit Calculator & Journal Logic ---
+            const calculateEurUsdProfitBtn = document.getElementById('calculateEurUsdProfit');
+            const eurUsdProfitResultDiv = document.getElementById('eurUsdProfitResult');
+            const calculateXauUsdProfitBtn = document.getElementById('calculateXauUsdProfit');
+            const xauUsdProfitResultDiv = document.getElementById('xauUsdProfitResult');
+            const journalEntriesDiv = document.getElementById('journalEntries');
+            const totalProfitLossDiv = document.getElementById('totalProfitLoss');
+
+
+            function calculateAndAddJournalEntry(pair, reasonId, entryId, stopLossId, targetId, exitId, lotSizeId, resultDiv) {
+                const reason = document.getElementById(reasonId).value.trim();
+                const entryPrice = parseFloat(document.getElementById(entryId).value);
+                const stopLoss = parseFloat(document.getElementById(stopLossId).value);
+                const targetPrice = parseFloat(document.getElementById(targetId).value);
+                const exitPrice = parseFloat(document.getElementById(exitId).value);
+                const lotSize = parseFloat(document.getElementById(lotSizeId).value);
+
+                if (!reason || isNaN(entryPrice) || isNaN(stopLoss) || isNaN(targetPrice) || isNaN(exitPrice) || isNaN(lotSize) || lotSize <= 0) {
+                    resultDiv.innerHTML = '<span class="text-red-600">Please fill in all fields with valid numbers.</span>';
+                    return;
+                }
+
+                let pipValuePerUnit;
+                if (pair === 'EUR/USD') {
+                    pipValuePerUnit = 0.0001;
+                } else if (pair === 'XAU/USD') {
+                    pipValuePerUnit = 0.01; // For Gold, 1 point = 0.01
+                }
+
+                const priceDifference = exitPrice - entryPrice;
+                const pips = priceDifference / pipValuePerUnit;
+                let profitLoss;
+
+                if (pair === 'EUR/USD') {
+                    profitLoss = pips * (lotSize * 10); // Standard lot is 100,000 units, 1 pip = $10 per standard lot
+                } else if (pair === 'XAU/USD') {
+                    profitLoss = pips * lotSize; // For XAU/USD, 1 unit per lot, 1 point = $1 per standard lot
+                }
+
+                let resultText;
+                if (profitLoss > 0) {
+                    resultText = `<span class="text-green-600">Profit: $${profitLoss.toFixed(2)}</span>`;
+                } else if (profitLoss < 0) {
+                    resultText = `<span class="text-red-600">Loss: $${Math.abs(profitLoss).toFixed(2)}</span>`;
+                } else {
+                    resultText = `<span class="text-gray-600">No profit or loss.</span>`;
+                }
+
+                resultDiv.innerHTML = `Calculated Pips/Points: ${pips.toFixed(2)}<br>${resultText}`;
+
+                const newEntry = {
+                    type: 'trade',
+                    date: new Date().toLocaleString(),
+                    pair: pair,
+                    reason: reason,
+                    entryPrice: entryPrice,
+                    stopLoss: stopLoss,
+                    targetPrice: targetPrice,
+                    exitPrice: exitPrice,
+                    lotSize: lotSize,
+                    profitLoss: profitLoss
+                };
+                journalData.push(newEntry);
+                renderJournalEntries();
+
+                // Clear form fields
+                document.getElementById(reasonId).value = '';
+                document.getElementById(entryId).value = '';
+                document.getElementById(stopLossId).value = '';
+                document.getElementById(targetId).value = '';
+                document.getElementById(exitId).value = '';
+                document.getElementById(lotSizeId).value = '0.1'; // Reset to default
+            }
+
+            calculateEurUsdProfitBtn.addEventListener('click', () => {
+                calculateAndAddJournalEntry('EUR/USD', 'eurUsdReason', 'eurUsdEntryPrice', 'eurUsdStopLoss', 'eurUsdTargetPrice', 'eurUsdExitPrice', 'eurUsdLotSize', eurUsdProfitResultDiv);
+            });
+
+            calculateXauUsdProfitBtn.addEventListener('click', () => {
+                calculateAndAddJournalEntry('XAU/USD', 'xauUsdReason', 'xauUsdEntryPrice', 'xauUsdStopLoss', 'xauUsdTargetPrice', 'xauUsdExitPrice', 'xauUsdLotSize', xauUsdProfitResultDiv);
+            });
+
+            function renderJournalEntries() {
+                journalEntriesDiv.innerHTML = ''; // Clear previous entries
+                let totalProfit = 0;
+
+                // Iterate in reverse to show newest entries at the top
+                for (let i = journalData.length - 1; i >= 0; i--) {
+                    const entry = journalData[i];
+                    let profitLossDisplay = '';
+                    if (entry.profitLoss !== undefined) {
+                        const icon = entry.profitLoss >= 0
+                            ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block align-middle mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>` // Up arrow
+                            : `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block align-middle mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V6" /></svg>`; // Down arrow
+                        const colorClass = entry.profitLoss >= 0 ? 'positive' : 'negative';
+                        profitLossDisplay = `<span class="profit-display ${colorClass}">${icon} $${entry.profitLoss.toFixed(2)}</span>`;
+                    }
+
+                    const entryHtml = `
+                        <div class="journal-entry">
+                            <p class="text-sm text-gray-500 mb-2"><strong>Date:</strong> ${entry.date}</p>
+                            <p class="mb-1"><strong>Pair:</strong> ${entry.pair}</p>
+                            <p class="mb-1"><strong>Reason:</strong> ${entry.reason}</p>
+                            <p class="mb-1"><strong>Entry:</strong> ${entry.entryPrice}</p>
+                            <p class="mb-1"><strong>Stop Loss:</strong> ${entry.stopLoss}</p>
+                            <p class="mb-1"><strong>Target:</strong> ${entry.targetPrice}</p>
+                            <p class="mb-1"><strong>Exit:</strong> ${entry.exitPrice}</p>
+                            <p class="mb-1"><strong>Lot Size:</strong> ${entry.lotSize}</p>
+                            <p class="mt-2"><strong>Profit/Loss:</strong> ${profitLossDisplay}</p>
+                        </div>
+                    `;
+                    journalEntriesDiv.insertAdjacentHTML('beforeend', entryHtml); // Append to show newest at top
+
+                    if (entry.profitLoss !== undefined) {
+                        totalProfit += entry.profitLoss;
+                    }
+                }
+
+                totalProfitLossDiv.innerHTML = `Total P/L: <span class="${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}">$${totalProfit.toFixed(2)}</span>`;
+            }
+
+            // Initial render of journal (if any pre-existing data, though none here initially)
+            renderJournalEntries();
+
+            // --- Global Trading Sessions Logic (for Tools Page) ---
+            const tradingSessionsDiv = document.getElementById('tradingSessions');
+            const viewingTimezoneSelect = document.getElementById('viewingTimezoneSelect'); // New selector
+
+            const sessionsConfig = [
+                { name: 'Sydney Session', timezone: 'Australia/Sydney', offset: 10, open: 0, close: 9, volume: 'Low' },
+                { name: 'Tokyo Session', timezone: 'Asia/Tokyo', offset: 9, open: 0, close: 9, volume: 'Medium' },
+                { name: 'London Session', timezone: 'Europe/London', offset: 1, open: 8, close: 17, volume: 'High' },
+                { name: 'New York Session', timezone: 'America/New_York', offset: -4, open: 8, close: 17, volume: 'High' }
+            ];
+
+            // Set default viewing timezone for the tools page sessions
+            if (viewingTimezoneSelect) {
+                viewingTimezoneSelect.value = 'Asia/Dubai'; // Default to Dubai
+            }
+
+            // Helper function to get a time string in a target timezone for a given hour
+            function getSessionTimeInTargetTimezone(sessionHour, sessionMinute, sessionTimeZone, targetTimeZone) {
+                const now = new Date();
+                // Create a Date object that represents the specific hour in the session's own timezone.
+                // This is done by creating a UTC date and then adjusting for the session's offset.
+                // However, Intl.DateTimeFormat is more robust for direct conversion.
+                // Let's create a date in the *user's local timezone* and then format it to the target timezone.
+                // This is simpler and generally works for displaying.
+                const dummyDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), sessionHour, sessionMinute, 0);
+
+                const options = { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: targetTimeZone };
+                return dummyDate.toLocaleString('en-US', options);
+            }
+
+            function updateTradingSessionsDisplay() {
+                if (!tradingSessionsDiv) return;
+
+                tradingSessionsDiv.innerHTML = '';
+                const now = new Date();
+                const selectedViewingTimeZone = viewingTimezoneSelect ? viewingTimezoneSelect.value : Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+                sessionsConfig.forEach(session => {
+                    // Current time in session's local timezone (for "Status" and current display)
+                    const sessionLocalTimeOptions = {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false,
+                        timeZone: session.timezone
+                    };
+                    const sessionLocalTimeFormatter = new Intl.DateTimeFormat('en-US', sessionLocalTimeOptions);
+                    const currentSessionLocalTimeStr = sessionLocalTimeFormatter.format(now);
+                    const currentSessionLocalHour = parseInt(currentSessionLocalTimeStr.split(':')[0]);
+
+                    let sessionActive = false;
+                    if (session.open < session.close) {
+                        sessionActive = (currentSessionLocalHour >= session.open && currentSessionLocalHour < session.close);
+                    } else {
+                        sessionActive = (currentSessionLocalHour >= session.open || currentSessionLocalHour < session.close);
+                    }
+
+                    let volumeLevel = session.volume;
+                    let volumePercentage = 33;
+                    let activityText = 'Normal Activity';
+
+                    const currentUTCHour = now.getUTCHours();
+                    if (currentUTCHour >= 7 && currentUTCHour < 8) {
+                        if (session.name === 'London Session' || session.name === 'Tokyo Session') {
+                            volumeLevel = 'Very High';
+                            volumePercentage = 100;
+                            activityText = 'High Overlap Activity';
+                        }
+                    } else if (currentUTCHour >= 12 && currentUTCHour < 16) {
+                        if (session.name === 'London Session' || session.name === 'New York Session') {
+                            volumeLevel = 'Very High';
+                            volumePercentage = 100;
+                            activityText = 'High Overlap Activity';
+                        }
+                    } else if (session.volume === 'High') {
+                        volumePercentage = 75;
+                    } else if (session.volume === 'Medium') {
+                        volumePercentage = 50;
+                    }
+
+                    // Calculate Open/Close times in the selected viewing timezone
+                    const openTimeInViewingTZ = getSessionTimeInTargetTimezone(session.open, 0, session.timezone, selectedViewingTimeZone);
+                    const closeTimeInViewingTZ = getSessionTimeInTargetTimezone(session.close, 0, session.timezone, selectedViewingTimeZone);
+
+                    let displayViewingTimeZoneName = selectedViewingTimeZone;
+                    if (selectedViewingTimeZone === 'local') {
+                        displayViewingTimeZoneName = 'Your Local Time';
+                    } else {
+                        displayViewingTimeZoneName = selectedViewingTimeZone.split('/')[1] ? selectedViewingTimeZone.split('/')[1].replace('_', ' ') : selectedViewingTimeZone;
+                    }
+
+
+                    const sessionHtml = `
+                        <div class="session-card ${sessionActive ? 'border-2 border-gray-700' : ''}">
+                            <h4 class="text-xl font-semibold text-gray-900">${session.name}</h4>
+                            <p class="text-gray-600 text-sm">${session.timezone} (UTC${session.offset >= 0 ? '+' : ''}${session.offset})</p>
+                            <p class="text-gray-700 text-sm mt-1">
+                                Open: <span class="font-semibold">${openTimeInViewingTZ}</span> | Close: <span class="font-semibold">${closeTimeInViewingTZ}</span> <br>
+                                <span class="text-xs text-gray-500">(${displayViewingTimeZoneName})</span>
+                            </p>
+                            <p class="text-2xl font-bold text-gray-800 my-2">${currentSessionLocalTimeStr}</p>
+                            <p class="text-gray-700 text-sm">Status: <span class="font-semibold ${sessionActive ? 'text-green-600' : 'text-red-600'}">${sessionActive ? 'Open' : 'Closed'}</span></p>
+                            <p class="text-gray-700 text-sm mt-1">Typical Volume: <span class="font-semibold">${volumeLevel}</span></p>
+                            <div class="volume-bar">
+                                <div class="volume-fill" style="width: ${volumePercentage}%;"></div>
+                            </div>
+                            <p class="text-gray-500 text-xs mt-1">${activityText}</p>
+                        </div>
+                    `;
+                    tradingSessionsDiv.insertAdjacentHTML('beforeend', sessionHtml);
+                });
+            }
+
+            // Event listener for viewing timezone change
+            if (viewingTimezoneSelect) {
+                viewingTimezoneSelect.addEventListener('change', updateTradingSessionsDisplay);
+            }
+
+            // Update sessions display every second on the tools page
+            setInterval(updateTradingSessionsDisplay, 1000);
+            updateTradingSessionsDisplay(); // Initial call
+        });
+    </script>
+</body>
+</html>
